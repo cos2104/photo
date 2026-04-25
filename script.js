@@ -18,20 +18,37 @@ const slots = [
 let photoCount = 0; // 현재까지 찍은 사진 수
 const capturedImages = []; // 이미지 데이터를 담을 배열
 
-// 1. 카메라 시작 기능
+// script.js의 initCamera 함수 부분을 아래 내용으로 덮어쓰기 하세요.
 async function initCamera() {
+    const constraints = {
+        video: {
+            width: { ideal: 1280 }, // 가능한 1280을 시도하되
+            height: { ideal: 960 },
+            facingMode: "user"      // 셀카 모드 우선
+        },
+        audio: false
+    };
+
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 960 }, // 4:3 비율 권장
-            audio: false
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
+        
+        // 일부 브라우저에서 play()를 명시적으로 호출해야 하는 경우가 있습니다.
+        video.onloadedmetadata = () => {
+            video.play();
+        };
     } catch (err) {
-        console.error("카메라를 켤 수 없습니다: ", err);
-        alert("카메라 권한을 허용해 주세요!");
+        console.error("카메라 에러 상세:", err);
+        if (err.name === 'OverconstrainedError') {
+            // 해상도 문제일 경우 사양을 낮춰서 재시도
+            const lowResConstraints = { video: true, audio: false };
+            const lowResStream = await navigator.mediaDevices.getUserMedia(lowResConstraints);
+            video.srcObject = lowResStream;
+        } else {
+            alert("카메라를 켤 수 없습니다. 브라우저 주소창 왼쪽의 '자물쇠' 아이콘을 눌러 권한을 확인해 주세요.");
+        }
     }
 }
-
 // 2. 사진 촬영 기능
 function takePhoto() {
     if (photoCount >= 4) {
