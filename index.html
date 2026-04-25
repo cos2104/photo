@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>과학자 포토부스</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,9 +14,9 @@
             <p>나와 꼭 맞는 과학자를 찾고 함께 네컷 사진을 찍어보세요!</p>
         </header>
 
-        <section id="survey-section">
+        <section id="survey-section" class="card">
             <div id="question-container">
-                <h2 id="question-text">질문이 여기에 표시됩니다.</h2>
+                <h2 id="question-text">로딩 중...</h2>
                 <div id="answer-buttons">
                     </div>
             </div>
@@ -24,13 +25,43 @@
         <main id="main-booth" style="display: none;">
             
             <section class="camera-section">
-                <div class="video-wrapper">
-                    <video id="webcam" autoplay playsinline></video>
-                    
-                    <img id="scientist-overlay" src="" alt="과학자 캐릭터">
-                    
-                    <div id="flash"></div>
+                <div class="card video-card">
+                    <div class="video-wrapper">
+                        <video id="webcam" autoplay playsinline></video>
+                        <img id="scientist-overlay" src="" alt="과학자 캐릭터">
+                        <div id="flash"></div>
+                    </div>
                 </div>
                 
-                <div class="controls">
-                    <div id="match-info">당신은 <span id="scientist-name">???</span>형 과학자!
+                <div class="controls card">
+                    <div id="match-info">당신은 <span id="scientist-name">???</span>형 과학자!</div>
+                    <button id="capture-btn" class="primary-btn">📸 사진 찍기</button>
+                    
+                    <div class="gallery-title">사진 보관함 (클릭해서 오른쪽 프레임에 넣기)</div>
+                    <div id="photo-gallery">
+                        </div>
+                </div>
+            </section>
+
+            <section class="preview-section">
+                <div class="card preview-card">
+                    <h3>내 네컷사진</h3>
+                    <div id="photo-strip" class="strip-white">
+                        <div class="photo-slot" id="slot-1"></div>
+                        <div class="photo-slot" id="slot-2"></div>
+                        <div class="photo-slot" id="slot-3"></div>
+                        <div class="photo-slot" id="slot-4"></div>
+                    </div>
+                    <div class="download-area">
+                        <button id="download-btn" class="action-btn" disabled>💾 프레임 씌워서 저장하기</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
