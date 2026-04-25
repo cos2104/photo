@@ -3,26 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Photo Booth</title>
+    <title>과학자 포토부스</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📸 My Photo Booth</h1>
-            <p>나만의 4컷 사진을 만들어보세요!</p>
+            <h1>🔬 Scientist Photo Booth</h1>
+            <p>나와 꼭 맞는 과학자를 찾고 함께 네컷 사진을 찍어보세요!</p>
         </header>
 
-        <main>
+        <section id="survey-section">
+            <div id="question-container">
+                <h2 id="question-text">질문이 여기에 표시됩니다.</h2>
+                <div id="answer-buttons">
+                    </div>
+            </div>
+        </section>
+
+        <main id="main-booth" style="display: none;">
+            
             <section class="camera-section">
                 <div class="video-wrapper">
                     <video id="webcam" autoplay playsinline></video>
+                    
+                    <img id="scientist-overlay" src="" alt="과학자 캐릭터">
+                    
                     <div id="flash"></div>
                 </div>
                 
                 <div class="controls">
-                    <button id="capture-btn">사진 찍기</button>
-                    <button id="reset-btn">다시 찍기</button>
+                    <div id="match-info">당신은 <span id="scientist-name">???</span>형 과학자!</div>
+                    <div class="button-group">
+                        <button id="capture-btn">사진 찍기</button>
+                        <button id="reset-btn">다시 찍기</button>
+                    </div>
                 </div>
             </section>
 

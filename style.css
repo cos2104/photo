@@ -1,11 +1,14 @@
-/* 기본 폰트 및 배경 설정 */
+/* =========================================================
+   1. 기본 폰트 및 전체 레이아웃 설정
+   ========================================================= */
 body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    background-color: #f0f2f5;
+    background-color: #f4f7f6;
     margin: 0;
     padding: 20px;
     display: flex;
     justify-content: center;
+    color: #333;
 }
 
 .container {
@@ -15,53 +18,116 @@ body {
 }
 
 header h1 {
-    color: #333;
+    color: #2c3e50;
     margin-bottom: 5px;
+    font-size: 2.2rem;
 }
 
 header p {
-    color: #666;
+    color: #7f8c8d;
     margin-bottom: 30px;
+    font-size: 1.1rem;
 }
 
-/* 메인 레이아웃: 카메라와 미리보기를 가로로 배치 */
-main {
+/* =========================================================
+   2. 설문조사 화면 (1단계)
+   ========================================================= */
+#survey-section {
+    background: #ffffff;
+    padding: 50px 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#question-text {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    word-break: keep-all;
+}
+
+#answer-buttons {
     display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#answer-buttons button {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 2px solid #e9ecef;
+    padding: 18px 24px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#answer-buttons button:hover {
+    background-color: #e9ecef;
+    border-color: #4A90E2;
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   3. 메인 포토부스 화면 (2단계)
+   ========================================================= */
+#main-booth {
+    /* JS에서 flex로 변경하여 가로 배치되도록 설정함 */
     gap: 40px;
     justify-content: center;
-    flex-wrap: wrap; /* 화면이 작아지면 아래로 내려감 */
+    flex-wrap: wrap; /* 모바일 환경에서는 아래로 떨어지도록 반응형 처리 */
 }
 
-/* --- 왼쪽: 카메라 섹션 --- */
+/* --- 왼쪽: 카메라 및 컨트롤 섹션 --- */
 .camera-section {
     flex: 1;
     min-width: 320px;
+    max-width: 640px;
 }
 
 .video-wrapper {
     position: relative;
     width: 100%;
-    border-radius: 15px;
+    border-radius: 20px;
     overflow: hidden;
     background: #000;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
 #webcam {
     width: 100%;
-    aspect-ratio: 4 / 3; /* 표준 카메라 비율 */
+    aspect-ratio: 4 / 3;
     object-fit: cover;
-    transform: scaleX(-1); /* 좌우 반전 (거울 모드) */
+    transform: scaleX(-1); /* 거울 모드 (좌우 반전) */
+    display: block;
 }
 
-/* 사진 촬영 시 번쩍이는 효과 */
+/* 과학자 캐릭터 오버레이 이미지 */
+#scientist-overlay {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 150px; /* 캐릭터 크기에 맞게 조절 가능 */
+    height: auto;
+    z-index: 10;
+    pointer-events: none; /* 클릭 방해 금지 */
+    filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.3)); /* 캐릭터에 약간의 그림자 추가 */
+}
+
+/* 사진 촬영 시 번쩍이는 플래시 효과 */
 #flash {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
     background: white;
     opacity: 0;
     pointer-events: none;
+    z-index: 20;
 }
 
 .flash-active {
@@ -73,80 +139,125 @@ main {
     100% { opacity: 0; }
 }
 
+/* 하단 컨트롤 영역 (매칭 정보 & 버튼) */
 .controls {
-    margin-top: 20px;
+    margin-top: 25px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+#match-info {
+    font-size: 1.3rem;
+    color: #34495e;
+    margin-bottom: 15px;
+}
+
+#scientist-name {
+    font-weight: 800;
+    color: #4A90E2;
+}
+
+.button-group {
     display: flex;
     gap: 10px;
     justify-content: center;
 }
 
-/* --- 오른쪽: 미리보기(4컷 프레임) 섹션 --- */
+/* --- 오른쪽: 4컷 사진 미리보기 섹션 --- */
 .preview-section {
-    flex: 0 0 300px;
+    flex: 0 0 320px;
 }
 
-/* 4컷 인화지 스타일 */
 #photo-strip {
-    width: 260px;
+    width: 280px;
     padding: 20px;
-    background-color: #ffffff; /* 프레임 색상 */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin: 0 auto;
+    border-radius: 4px;
 }
 
-.strip-white { background-color: #fff; } /* 기본 흰색 프레임 */
+.strip-white {
+    background-color: #ffffff;
+}
 
 .photo-slot {
     width: 100%;
     aspect-ratio: 4 / 3;
-    background-color: #eee;
+    background-color: #e2e8f0;
     background-size: cover;
     background-position: center;
-    border-radius: 2px;
+    border-radius: 4px;
+    /* 사진이 들어갔을 때 거울 모드 화면을 그대로 보여주기 위한 반전 설정은 JS에서 처리함 */
 }
 
 .strip-footer {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #888;
-    font-weight: bold;
+    margin-top: 15px;
+    font-size: 15px;
+    color: #718096;
+    font-weight: 700;
     text-align: center;
+    letter-spacing: 1px;
 }
 
-/* --- 버튼 스타일 --- */
+/* =========================================================
+   4. 공통 버튼 스타일
+   ========================================================= */
 button {
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 600;
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: 700;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.98);
 }
 
 #capture-btn {
     background-color: #4A90E2;
     color: white;
+    flex: 2;
 }
 
-#capture-btn:hover { background-color: #357ABD; }
+#capture-btn:hover {
+    background-color: #357ABD;
+}
 
 #reset-btn {
-    background-color: #e0e0e0;
-    color: #333;
+    background-color: #e2e8f0;
+    color: #4a5568;
+    flex: 1;
+}
+
+#reset-btn:hover {
+    background-color: #cbd5e0;
+}
+
+.download-area {
+    margin-top: 20px;
 }
 
 #download-btn {
-    margin-top: 20px;
     width: 100%;
-    background-color: #333;
+    background-color: #2d3748;
     color: white;
+    padding: 16px;
+}
+
+#download-btn:hover:not(:disabled) {
+    background-color: #1a202c;
 }
 
 #download-btn:disabled {
-    background-color: #ccc;
+    background-color: #a0aec0;
     cursor: not-allowed;
+    transform: none;
 }
