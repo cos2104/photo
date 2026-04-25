@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Photo Booth</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 My Photo Booth</h1>
+            <p>나만의 4컷 사진을 만들어보세요!</p>
+        </header>
+
+        <main>
+            <section class="camera-section">
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline></video>
+                    <div id="flash"></div>
+                </div>
+                
+                <div class="controls">
+                    <button id="capture-btn">사진 찍기</button>
+                    <button id="reset-btn">다시 찍기</button>
+                </div>
+            </section>
+
+            <section class="preview-section">
+                <div id="photo-strip" class="strip-white">
+                    <div class="photo-slot" id="slot-1"></div>
+                    <div class="photo-slot" id="slot-2"></div>
+                    <div class="photo-slot" id="slot-3"></div>
+                    <div class="photo-slot" id="slot-4"></div>
+                    <div class="strip-footer">
+                        <span id="current-date">2026. 04. 25</span>
+                    </div>
+                </div>
+
+                <div class="download-area">
+                    <button id="download-btn" disabled>이미지 저장하기</button>
+                </div>
+            </section>
+        </main>
+
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
