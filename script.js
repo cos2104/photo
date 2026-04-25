@@ -18,37 +18,47 @@ const slots = [
 let photoCount = 0; // 현재까지 찍은 사진 수
 const capturedImages = []; // 이미지 데이터를 담을 배열
 
-// script.js의 initCamera 함수 부분을 아래 내용으로 덮어쓰기 하세요.
+// 모든 카메라 장치를 찾아 노트북 카메라(또는 첫 번째 카메라)를 우선 연결하는 코드
 async function initCamera() {
-    const constraints = {
-        video: {
-            width: { ideal: 1280 }, // 가능한 1280을 시도하되
-            height: { ideal: 960 },
-            facingMode: "user"      // 셀카 모드 우선
-        },
-        audio: false
-    };
-
     try {
+        // 우선 현재 연결 가능한 장치 목록을 가져옵니다.
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+        if (videoDevices.length === 0) {
+            alert("연결된 카메라가 없습니다.");
+            return;
+        }
+
+        // 특정 키워드(Internal, Built-in 등)가 포함된 장치를 찾거나, 없으면 첫 번째 장치 선택
+        const internalCamera = videoDevices.find(device => 
+            device.label.toLowerCase().includes('internal') || 
+            device.label.toLowerCase().includes('built-in')
+        );
+
+        const targetDeviceId = internalCamera ? internalCamera.deviceId : videoDevices[0].deviceId;
+
+        const constraints = {
+            video: {
+                deviceId: { exact: targetDeviceId },
+                width: { ideal: 1280 },
+                height: { ideal: 960 }
+            },
+            audio: false
+        };
+
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        
-        // 일부 브라우저에서 play()를 명시적으로 호출해야 하는 경우가 있습니다.
-        video.onloadedmetadata = () => {
-            video.play();
-        };
+        video.onloadedmetadata = () => video.play();
+
     } catch (err) {
-        console.error("카메라 에러 상세:", err);
-        if (err.name === 'OverconstrainedError') {
-            // 해상도 문제일 경우 사양을 낮춰서 재시도
-            const lowResConstraints = { video: true, audio: false };
-            const lowResStream = await navigator.mediaDevices.getUserMedia(lowResConstraints);
-            video.srcObject = lowResStream;
-        } else {
-            alert("카메라를 켤 수 없습니다. 브라우저 주소창 왼쪽의 '자물쇠' 아이콘을 눌러 권한을 확인해 주세요.");
-        }
+        console.error("카메라 에러:", err);
+        // 만약 'exact' 설정 때문에 에러가 나면, 그냥 기본 카메라로 재시도
+        const basicStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = basicStream;
     }
 }
+
 // 2. 사진 촬영 기능
 function takePhoto() {
     if (photoCount >= 4) {
