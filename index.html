@@ -1,67 +1,799 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>과학자 포토부스</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>과학의 날 포토부스 - 나와 닮은 과학자는?</title>
+
+<!-- ================================================== -->
+<!-- ★★★ 카카오 JavaScript 키를 아래 따옴표 안에 입력하세요 ★★★ -->
+<!-- (developers.kakao.com → 내 애플리케이션 → 앱 키 → JavaScript 키) -->
+<!-- ================================================== -->
+<script>
+const KAKAO_JS_KEY = 'e4a66ccdcee53d76e596e6cd51332c23';
+</script>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #0b1026;
+    --bg2: #1a2150;
+    --accent: #ffd54a;
+    --accent2: #7c6cff;
+    --text: #f5f6ff;
+    --sub: #aab0d8;
+    --card: rgba(255,255,255,0.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: radial-gradient(ellipse at 50% -20%, var(--bg2), var(--bg) 60%);
+    color: var(--text);
+    overflow: hidden;
+  }
+  /* 별 배경 */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars span {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: #fff; opacity: .6; animation: twinkle 3s infinite;
+  }
+  @keyframes twinkle { 0%,100%{opacity:.15} 50%{opacity:.8} }
+
+  .screen {
+    position: fixed; inset: 0; z-index: 1;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; text-align: center;
+    overflow-y: auto;
+  }
+  .screen.active { display: flex; animation: fadein .4s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  .home-btn {
+    position: absolute; top: 20px; left: 20px;
+    background: var(--card); border: 1px solid rgba(255,255,255,.15);
+    color: var(--sub); padding: 8px 16px; border-radius: 20px;
+    cursor: pointer; font-size: 14px; z-index: 5;
+  }
+  .home-btn:hover { color: var(--text); }
+
+  h1.logo {
+    font-size: clamp(36px, 7vw, 64px); font-weight: 900; line-height: 1.2;
+    background: linear-gradient(135deg, var(--accent), #ff9e6d, var(--accent2));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  .tagline { color: var(--sub); font-size: clamp(15px, 2.5vw, 20px); margin-bottom: 48px; }
+
+  .big-btn {
+    background: linear-gradient(135deg, var(--accent), #ffb74a);
+    color: #201500; font-size: 22px; font-weight: 800;
+    border: none; border-radius: 999px; padding: 18px 64px;
+    cursor: pointer; box-shadow: 0 8px 30px rgba(255,213,74,.35);
+    transition: transform .15s;
+  }
+  .big-btn:hover { transform: scale(1.05); }
+  .big-btn:active { transform: scale(.97); }
+
+  .step-badge {
+    display: inline-block; background: var(--accent2); color: #fff;
+    font-size: 13px; font-weight: 700; padding: 5px 14px; border-radius: 999px;
+    margin-bottom: 14px; letter-spacing: 1px;
+  }
+  h2 { font-size: clamp(22px, 4vw, 32px); margin-bottom: 8px; }
+  .sub { color: var(--sub); font-size: 15px; margin-bottom: 28px; }
+
+  /* 퀴즈 */
+  .quiz-box { width: min(560px, 100%); }
+  .progress {
+    height: 6px; background: rgba(255,255,255,.1); border-radius: 3px;
+    margin-bottom: 28px; overflow: hidden;
+  }
+  .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
+  .q-text { font-size: clamp(19px, 3vw, 24px); font-weight: 700; margin-bottom: 24px; min-height: 60px; }
+  .answers { display: flex; flex-direction: column; gap: 12px; }
+  .answers button {
+    background: var(--card); border: 1px solid rgba(255,255,255,.14);
+    color: var(--text); font-size: 16px; padding: 16px 20px;
+    border-radius: 14px; cursor: pointer; text-align: left; transition: all .15s;
+  }
+  .answers button:hover { background: rgba(124,108,255,.25); border-color: var(--accent2); transform: translateX(4px); }
+
+  /* 분석 중 */
+  .loader {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 5px solid rgba(255,255,255,.12); border-top-color: var(--accent);
+    animation: spin 1s linear infinite; margin-bottom: 28px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 결과 카드 */
+  .result-card {
+    background: var(--card); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 24px; padding: 32px 28px; width: min(420px, 100%);
+    backdrop-filter: blur(8px); margin-bottom: 24px;
+  }
+  .avatar { font-size: 88px; line-height: 1; margin-bottom: 12px; }
+  .sci-name { font-size: 30px; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
+  .sci-field { color: var(--sub); font-size: 14px; margin-bottom: 16px; }
+  .sci-desc { font-size: 15px; line-height: 1.7; margin-bottom: 20px; }
+  .keywords { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .keywords span {
+    background: rgba(124,108,255,.25); border: 1px solid var(--accent2);
+    padding: 5px 14px; border-radius: 999px; font-size: 13px;
+  }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .ghost-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,.3);
+    color: var(--text); padding: 14px 28px; border-radius: 999px;
+    font-size: 16px; cursor: pointer;
+  }
+  .ghost-btn:hover { background: rgba(255,255,255,.08); }
+  .kakao-btn {
+    background: #FEE500; color: #191919;
+    font-size: 18px; font-weight: 800;
+    border: none; border-radius: 999px; padding: 16px 36px;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(254,229,0,.3);
+    transition: transform .15s;
+  }
+  .kakao-btn:hover { transform: scale(1.05); }
+  .avatar img { width: 120px; height: 120px; object-fit: contain; border-radius: 20px; }
+
+  /* 프레임 선택 */
+  .frames { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .frame-card {
+    background: var(--card); border: 2px solid rgba(255,255,255,.15);
+    border-radius: 20px; padding: 24px; width: 220px; cursor: pointer;
+    transition: all .15s; color: var(--text);
+  }
+  .frame-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .frame-preview {
+    width: 90px; margin: 0 auto 14px; border-radius: 8px; padding: 8px;
+    display: grid; gap: 5px;
+  }
+  .frame-preview i { display: block; height: 28px; background: rgba(255,255,255,.25); border-radius: 4px; }
+  .frame-card h3 { font-size: 17px; margin-bottom: 6px; }
+  .frame-card p { font-size: 13px; color: var(--sub); }
+
+  /* 카메라 */
+  .cam-wrap {
+    position: relative; width: min(480px, 90vw); aspect-ratio: 4/3;
+    border-radius: 20px; overflow: hidden; background: #000;
+    margin-bottom: 20px; border: 3px solid rgba(255,255,255,.2);
+  }
+  .cam-wrap video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .countdown {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    font-size: 120px; font-weight: 900; color: #fff;
+    text-shadow: 0 0 30px rgba(0,0,0,.6); background: rgba(0,0,0,.2);
+  }
+  .countdown.show { display: flex; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.on { animation: flashAnim .3s; }
+  @keyframes flashAnim { 0%{opacity:.9} 100%{opacity:0} }
+  .shot-count { color: var(--sub); margin-bottom: 16px; font-size: 15px; }
+  .shot-count b { color: var(--accent); }
+  .thumbs { display: flex; gap: 8px; margin-bottom: 16px; min-height: 54px; }
+  .thumbs img { width: 72px; height: 54px; object-fit: cover; border-radius: 8px; border: 2px solid var(--accent); }
+
+  .cam-error {
+    background: rgba(255,80,80,.15); border: 1px solid rgba(255,80,80,.5);
+    border-radius: 16px; padding: 20px 24px; margin-bottom: 16px; display: none;
+  }
+  .cam-error.show { display: block; }
+  .cam-error h3 { margin-bottom: 6px; font-size: 17px; }
+  .cam-error p { color: var(--sub); font-size: 14px; }
+
+  /* 최종 스티커 */
+  #stickerCanvas { display: none; }
+  .sticker-img {
+    max-height: 60vh; max-width: 90vw; border-radius: 12px;
+    box-shadow: 0 12px 50px rgba(0,0,0,.5); margin-bottom: 24px;
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔬 Scientist Photo Booth</h1>
-            <p>나와 꼭 맞는 과학자를 찾고 함께 네컷 사진을 찍어보세요!</p>
-        </header>
+<div class="stars" id="stars"></div>
 
-        <section id="survey-section" class="card">
-            <div id="question-container">
-                <h2 id="question-text">로딩 중...</h2>
-                <div id="answer-buttons">
-                    </div>
-            </div>
-        </section>
+<!-- 1. 시작 화면 -->
+<section class="screen active" id="scr-home">
+  <h1 class="logo">🔬 과학의 날<br>포토부스</h1>
+  <p class="tagline">나와 닮은 과학자는 누구일까?<br>성향 테스트 후 특별한 4컷 사진을 남겨보세요!</p>
+  <button class="big-btn" onclick="startQuiz()">시작하기 ✨</button>
+</section>
 
-        <main id="main-booth" style="display: none;">
-            
-            <section class="camera-section">
-                <div class="card video-card">
-                    <div class="video-wrapper">
-                        <video id="webcam" autoplay playsinline></video>
-                        <img id="scientist-overlay" src="" alt="과학자 캐릭터">
-                        <div id="flash"></div>
-                    </div>
-                </div>
-                
-                <div class="controls card">
-                    <div id="match-info">당신은 <span id="scientist-name">???</span>형 과학자!</div>
-                    <button id="capture-btn" class="primary-btn">📸 사진 찍기</button>
-                    
-                    <div class="gallery-title">사진 보관함 (클릭해서 오른쪽 프레임에 넣기)</div>
-                    <div id="photo-gallery">
-                        </div>
-                </div>
-            </section>
+<!-- 2. 퀴즈 -->
+<section class="screen" id="scr-quiz">
+  <button class="home-btn" onclick="goHome()">← 홈으로</button>
+  <div class="quiz-box">
+    <span class="step-badge">STEP 1</span>
+    <div class="progress"><i id="quizProgress"></i></div>
+    <div class="q-text" id="qText"></div>
+    <div class="answers" id="qAnswers"></div>
+  </div>
+</section>
 
-            <section class="preview-section">
-                <div class="card preview-card">
-                    <h3>내 네컷사진</h3>
-                    <div id="photo-strip" class="strip-white">
-                        <div class="photo-slot" id="slot-1"></div>
-                        <div class="photo-slot" id="slot-2"></div>
-                        <div class="photo-slot" id="slot-3"></div>
-                        <div class="photo-slot" id="slot-4"></div>
-                    </div>
-                    <div class="download-area">
-                        <button id="download-btn" class="action-btn" disabled>💾 프레임 씌워서 저장하기</button>
-                    </div>
-                </div>
-            </section>
-        </main>
+<!-- 3. 분석 중 -->
+<section class="screen" id="scr-analyzing">
+  <div class="loader"></div>
+  <h2>분석 중...</h2>
+  <p class="sub">당신의 과학적 성향을 분석하고 있습니다</p>
+</section>
 
-        <canvas id="canvas" style="display:none;"></canvas>
-    </div>
+<!-- 4. 결과 -->
+<section class="screen" id="scr-result">
+  <button class="home-btn" onclick="goHome()">← 홈으로</button>
+  <p class="sub" style="margin-bottom:12px">✨ 당신과 가장 결이 맞는 과학자 ✨</p>
+  <div class="result-card">
+    <div class="avatar" id="rAvatar"></div>
+    <div class="sci-name" id="rName"></div>
+    <div class="sci-field" id="rField"></div>
+    <div class="sci-desc" id="rDesc"></div>
+    <div class="keywords" id="rKeywords"></div>
+  </div>
+  <div class="btn-row">
+    <button class="big-btn" onclick="showScreen('scr-frame')">포토부스로 가기 📸</button>
+    <button class="ghost-btn" onclick="startQuiz()">다시 해보기</button>
+  </div>
+</section>
 
-    <script src="script.js"></script>
+<!-- 5. 프레임 선택 -->
+<section class="screen" id="scr-frame">
+  <button class="home-btn" onclick="goHome()">← 홈으로</button>
+  <span class="step-badge">STEP 2</span>
+  <h2>어떤 프레임으로 찍을까요?</h2>
+  <p class="sub">원하는 프레임을 선택하면 바로 포토부스가 시작돼요</p>
+  <div class="frames">
+    <button class="frame-card" onclick="pickFrame('scientist')">
+      <div class="frame-preview" style="background:linear-gradient(160deg,#2a2f6e,#5a3fa0)">
+        <i></i><i></i><i></i><i></i>
+      </div>
+      <h3>🧑‍🔬 과학자와 함께</h3>
+      <p>나와 매칭된 과학자와 함께 찰칵</p>
+    </button>
+    <button class="frame-card" onclick="pickFrame('science')">
+      <div class="frame-preview" style="background:linear-gradient(160deg,#a8dec2,#cdeeda)">
+        <i></i><i></i><i></i><i></i>
+      </div>
+      <h3>🚀 과학의 날 프레임</h3>
+      <p>과학의 날 기념 4컷 프레임</p>
+    </button>
+  </div>
+</section>
+
+<!-- 6. 카메라 -->
+<section class="screen" id="scr-camera">
+  <button class="home-btn" onclick="goHome()">← 홈으로</button>
+  <div class="cam-error" id="camError">
+    <h3>😢 카메라를 사용할 수 없어요</h3>
+    <p>브라우저에서 카메라 권한을 허용해주세요. (HTTPS 또는 localhost에서만 동작해요)</p>
+    <button class="ghost-btn" style="margin-top:12px" onclick="initCamera()">다시 시도</button>
+  </div>
+  <div class="cam-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="countdown" id="countdown"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+  <p class="shot-count"><b id="shotNum">0</b> / 4 컷 &nbsp;·&nbsp; 버튼을 누르면 3초 후 촬영됩니다</p>
+  <div class="thumbs" id="thumbs"></div>
+  <button class="big-btn" id="shootBtn" onclick="startShooting()">📸 촬영 시작</button>
+</section>
+
+<!-- 7. 완성 스티커 -->
+<section class="screen" id="scr-final">
+  <button class="home-btn" onclick="goHome()">← 홈으로</button>
+  <span class="step-badge">완성된 스티커</span>
+  <h2>오늘의 포토부스 🎉</h2>
+  <img class="sticker-img" id="stickerImg" alt="완성된 4컷 스티커">
+  <div class="btn-row">
+    <button class="big-btn" onclick="saveSticker()">💾 스티커 저장하기</button>
+    <button class="kakao-btn" onclick="shareKakao()">💬 카톡으로 보내기</button>
+    <button class="ghost-btn" onclick="retake()">다시 찍기</button>
+  </div>
+</section>
+
+<canvas id="stickerCanvas"></canvas>
+
+<script>
+/* ---------- 카카오 공유 ----------
+   ※ KAKAO_JS_KEY는 이 파일 맨 위(<head> 부분)에서 입력합니다.
+   그리고 developers.kakao.com의 [플랫폼 → Web]에 사이트 주소(예: http://localhost:8734, GitHub Pages 주소)를 등록해야 동작합니다. */
+if (window.Kakao && KAKAO_JS_KEY) Kakao.init(KAKAO_JS_KEY);
+
+async function shareKakao() {
+  if (!KAKAO_JS_KEY || !window.Kakao || !Kakao.isInitialized()) {
+    alert('카카오 공유를 쓰려면 index.html 상단의 KAKAO_JS_KEY에\ndevelopers.kakao.com에서 발급받은 JavaScript 키를 입력해주세요.');
+    return;
+  }
+  try {
+    const canvas = document.getElementById('stickerCanvas');
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'photobooth.png', { type: 'image/png' });
+    const res = await Kakao.Share.uploadImage({ file: [file] });
+    const imgUrl = res.infos.original.url;
+    Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: '🔬 과학의 날 포토부스',
+        description: matched ? `나와 닮은 과학자: ${matched.name}` : '과학의 날 기념 4컷 사진!',
+        imageUrl: imgUrl,
+        imageWidth: 600, imageHeight: 1880,
+        link: { mobileWebUrl: location.href, webUrl: location.href }
+      },
+      buttons: [
+        { title: '나도 해보기', link: { mobileWebUrl: location.href, webUrl: location.href } }
+      ]
+    });
+  } catch (e) {
+    alert('공유에 실패했어요: ' + (e && e.message ? e.message : e));
+  }
+}
+
+/* ---------- 별 배경 ---------- */
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+  const s = document.createElement('span');
+  s.style.left = Math.random() * 100 + '%';
+  s.style.top = Math.random() * 100 + '%';
+  s.style.animationDelay = Math.random() * 3 + 's';
+  starsEl.appendChild(s);
+}
+
+/* ---------- 화면 전환 ---------- */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'scr-camera') initCamera(); else stopCamera();
+}
+function goHome() { showScreen('scr-home'); }
+
+/* ---------- 과학자 데이터 ---------- */
+const SCIENTISTS = {
+  einstein: {
+    name: '알베르트 아인슈타인', field: '이론물리학 · 상대성이론', avatar: '🧠',
+    desc: '틀에 얽매이지 않는 자유로운 상상력의 소유자! 남들이 당연하게 여기는 것에 "왜?"라고 묻는 당신은 세상을 뒤집는 아이디어를 품고 있어요.',
+    keywords: ['상상력', '자유로움', '직관', '호기심']
+  },
+  curie: {
+    name: '마리 퀴리', field: '물리학 · 화학 (노벨상 2회)', avatar: '⚗️',
+    desc: '묵묵히 끝까지 파고드는 집념의 아이콘! 어려운 환경에서도 포기하지 않는 당신의 끈기는 언젠가 빛나는 발견으로 이어질 거예요.',
+    keywords: ['끈기', '집념', '성실함', '개척정신']
+  },
+  newton: {
+    name: '아이작 뉴턴', field: '물리학 · 수학', avatar: '🍎',
+    desc: '일상 속에서도 법칙을 발견하는 예리한 관찰자! 논리적이고 체계적인 당신은 복잡한 현상 뒤에 숨은 원리를 꿰뚫어봐요.',
+    keywords: ['논리', '체계', '관찰력', '몰입']
+  },
+  darwin: {
+    name: '찰스 다윈', field: '생물학 · 진화론', avatar: '🐢',
+    desc: '천천히, 그러나 확실하게! 오랜 시간 관찰하고 기록하며 결론을 내리는 당신은 신중함과 통찰력을 겸비한 탐험가예요.',
+    keywords: ['탐험', '신중함', '기록', '통찰']
+  },
+  tesla: {
+    name: '니콜라 테슬라', field: '전기공학 · 발명', avatar: '⚡',
+    desc: '머릿속에 미래가 그려지는 비전형 발명가! 남들보다 한발 앞서 미래를 상상하는 당신, 세상은 아직 당신을 따라오는 중이에요.',
+    keywords: ['비전', '발명', '미래지향', '독창성']
+  },
+  goodall: {
+    name: '제인 구달', field: '동물행동학 · 영장류 연구', avatar: '🌿',
+    desc: '따뜻한 마음으로 세상을 관찰하는 공감형 과학자! 생명을 사랑하고 자연과 교감하는 당신의 시선이 세상을 더 좋게 만들어요.',
+    keywords: ['공감', '자연', '사랑', '인내']
+  }
+};
+
+/* ---------- 과학자 이미지 (images/키이름.png 가 있으면 자동 사용, 없으면 이모지) ---------- */
+/* 이미지의 단색 배경(흰색 등)은 자동으로 투명하게 지워집니다.
+   가장자리에서 연결된 배경만 지우므로, 인물 안쪽의 흰색(머리카락, 가운 등)은 유지됩니다. */
+const sciImages = {};
+Object.keys(SCIENTISTS).forEach(k => {
+  const im = new Image();
+  im.onload = () => { sciImages[k] = removeImageBackground(im); };
+  im.src = 'images/' + k + '.png';
+});
+
+function removeImageBackground(img) {
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const W = c.width, H = c.height;
+  const data = ctx.getImageData(0, 0, W, H);
+  const px = data.data;
+
+  // 이미 투명 배경인 이미지는 그대로 사용
+  for (let x = 0; x < W; x += 10) {
+    if (px[x * 4 + 3] < 250 || px[((H - 1) * W + x) * 4 + 3] < 250) return c;
+  }
+
+  // 배경색 추정: 네 모서리 픽셀의 평균
+  const corners = [0, (W - 1) * 4, (H - 1) * W * 4, ((H - 1) * W + W - 1) * 4];
+  let br = 0, bg = 0, bb = 0;
+  corners.forEach(i => { br += px[i]; bg += px[i + 1]; bb += px[i + 2]; });
+  br /= 4; bg /= 4; bb /= 4;
+
+  const TOL = 48; // 배경으로 판정할 색 차이 허용치
+  const dist = i => Math.sqrt((px[i] - br) ** 2 + (px[i + 1] - bg) ** 2 + (px[i + 2] - bb) ** 2);
+
+  // 가장자리에서 시작해 배경색과 비슷한 픽셀만 따라가며 투명 처리 (flood fill)
+  const visited = new Uint8Array(W * H);
+  const stack = [];
+  for (let x = 0; x < W; x++) { stack.push(x, (H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { stack.push(y * W, y * W + W - 1); }
+  while (stack.length) {
+    const p = stack.pop();
+    if (visited[p]) continue;
+    visited[p] = 1;
+    const i = p * 4;
+    const d = dist(i);
+    if (d < TOL) {
+      px[i + 3] = 0;
+      const x = p % W, y = (p / W) | 0;
+      if (x > 0) stack.push(p - 1);
+      if (x < W - 1) stack.push(p + 1);
+      if (y > 0) stack.push(p - W);
+      if (y < H - 1) stack.push(p + W);
+    } else if (d < TOL * 2) {
+      // 경계선은 반투명으로 부드럽게
+      px[i + 3] = Math.min(px[i + 3], Math.round(255 * (d - TOL) / TOL));
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  return c;
+}
+
+/* ---------- 퀴즈 데이터 ---------- */
+const QUESTIONS = [
+  { q: '새로운 문제를 만났을 때 나는?',
+    a: [
+      ['일단 머릿속으로 자유롭게 상상해본다', { einstein: 2, tesla: 1 }],
+      ['자료를 찾고 차근차근 분석한다', { newton: 2, curie: 1 }],
+      ['직접 관찰하고 실험해본다', { darwin: 2, goodall: 1 }],
+    ]},
+  { q: '조별 과제에서 나의 역할은?',
+    a: [
+      ['아이디어를 쏟아내는 브레인', { tesla: 2, einstein: 1 }],
+      ['끝까지 마무리하는 책임자', { curie: 2, newton: 1 }],
+      ['팀 분위기를 챙기는 조율자', { goodall: 2, darwin: 1 }],
+    ]},
+  { q: '주말에 하고 싶은 것은?',
+    a: [
+      ['공상하며 뒹굴뒹굴', { einstein: 2 }],
+      ['밀린 할 일 몰아서 끝내기', { curie: 2 }],
+      ['산책하며 자연 구경', { darwin: 1, goodall: 2 }],
+      ['신기한 가젯/기술 구경', { tesla: 2, newton: 1 }],
+    ]},
+  { q: '더 끌리는 말은?',
+    a: [
+      ['"상상력이 지식보다 중요하다"', { einstein: 2, tesla: 1 }],
+      ['"천재는 1%의 영감과 99%의 노력"', { curie: 2, newton: 1 }],
+      ['"자연은 서두르지 않는다"', { darwin: 2, goodall: 1 }],
+    ]},
+  { q: '실험이 계속 실패한다면?',
+    a: [
+      ['될 때까지 반복한다', { curie: 2, newton: 1 }],
+      ['완전히 새로운 방법을 떠올린다', { einstein: 1, tesla: 2 }],
+      ['잠시 멈추고 처음부터 다시 관찰한다', { darwin: 2, goodall: 1 }],
+    ]},
+  { q: '나에게 과학이란?',
+    a: [
+      ['세상의 비밀을 푸는 열쇠', { newton: 2, einstein: 1 }],
+      ['미래를 만드는 도구', { tesla: 2, curie: 1 }],
+      ['생명과 자연을 이해하는 길', { goodall: 2, darwin: 1 }],
+    ]},
+];
+
+let qIndex = 0;
+let scores = {};
+
+function startQuiz() {
+  qIndex = 0;
+  scores = {};
+  Object.keys(SCIENTISTS).forEach(k => scores[k] = 0);
+  showScreen('scr-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const item = QUESTIONS[qIndex];
+  document.getElementById('quizProgress').style.width = (qIndex / QUESTIONS.length * 100) + '%';
+  document.getElementById('qText').textContent = `Q${qIndex + 1}. ${item.q}`;
+  const box = document.getElementById('qAnswers');
+  box.innerHTML = '';
+  item.a.forEach(([text, pts]) => {
+    const b = document.createElement('button');
+    b.textContent = text;
+    b.onclick = () => {
+      for (const k in pts) scores[k] += pts[k];
+      qIndex++;
+      if (qIndex < QUESTIONS.length) renderQuestion();
+      else finishQuiz();
+    };
+    box.appendChild(b);
+  });
+}
+
+let matched = null;
+let matchedKey = null;
+
+function finishQuiz() {
+  showScreen('scr-analyzing');
+  setTimeout(() => {
+    const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+    matched = SCIENTISTS[best];
+    matchedKey = best;
+    const avatarEl = document.getElementById('rAvatar');
+    if (sciImages[best]) {
+      avatarEl.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = sciImages[best].toDataURL();
+      img.alt = matched.name;
+      avatarEl.appendChild(img);
+    } else {
+      avatarEl.textContent = matched.avatar;
+    }
+    document.getElementById('rName').textContent = matched.name;
+    document.getElementById('rField').textContent = matched.field;
+    document.getElementById('rDesc').textContent = matched.desc;
+    const kw = document.getElementById('rKeywords');
+    kw.innerHTML = '';
+    matched.keywords.forEach(k => {
+      const s = document.createElement('span');
+      s.textContent = '#' + k;
+      kw.appendChild(s);
+    });
+    showScreen('scr-result');
+  }, 2200);
+}
+
+/* ---------- 프레임 선택 ---------- */
+let frameType = 'science';
+function pickFrame(type) {
+  frameType = type;
+  shots = [];
+  showScreen('scr-camera');
+}
+
+/* ---------- 카메라 ---------- */
+const video = document.getElementById('video');
+let stream = null;
+let shots = [];
+
+async function initCamera() {
+  document.getElementById('camError').classList.remove('show');
+  updateShotUI();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: 'user' },
+      audio: false
+    });
+    video.srcObject = stream;
+  } catch (e) {
+    document.getElementById('camError').classList.add('show');
+  }
+}
+
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+function updateShotUI() {
+  document.getElementById('shotNum').textContent = shots.length;
+  const t = document.getElementById('thumbs');
+  t.innerHTML = '';
+  shots.forEach(src => {
+    const img = document.createElement('img');
+    img.src = src;
+    t.appendChild(img);
+  });
+}
+
+async function startShooting() {
+  if (!stream) { initCamera(); return; }
+  const btn = document.getElementById('shootBtn');
+  btn.disabled = true;
+  while (shots.length < 4) {
+    await countdown(3);
+    capture();
+    updateShotUI();
+    await sleep(600);
+  }
+  btn.disabled = false;
+  stopCamera();
+  composeSticker();
+  showScreen('scr-final');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function countdown(n) {
+  const el = document.getElementById('countdown');
+  el.classList.add('show');
+  for (let i = n; i >= 1; i--) {
+    el.textContent = i;
+    await sleep(1000);
+  }
+  el.classList.remove('show');
+}
+
+function capture() {
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth || 1280;
+  c.height = video.videoHeight || 960;
+  const ctx = c.getContext('2d');
+  ctx.translate(c.width, 0);
+  ctx.scale(-1, 1); // 거울모드
+  ctx.drawImage(video, 0, 0, c.width, c.height);
+  shots.push(c.toDataURL('image/jpeg', 0.92));
+  const flash = document.getElementById('flash');
+  flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on');
+}
+
+/* ---------- 스티커 합성 ---------- */
+function composeSticker() {
+  const canvas = document.getElementById('stickerCanvas');
+  const W = 600, PAD = 34, GAP = 18;
+  const photoW = W - PAD * 2;
+  const photoH = Math.round(photoW * 3 / 4);
+  const headerH = 104, footerH = 118;
+  const H = headerH + photoH * 4 + GAP * 3 + footerH;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const isSci = frameType === 'scientist';
+
+  /* ----- 배경 ----- */
+  if (isSci) {
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#232963'); grad.addColorStop(1, '#5a3fa0');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 137.5) % W, y = (i * 91.7) % H;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + (i % 4) * 0.15) + ')';
+      ctx.beginPath(); ctx.arc(x, y, 1 + (i % 3) * 0.7, 0, Math.PI * 2); ctx.fill();
+    }
+  } else {
+    // 파스텔 민트 스트라이프 배경
+    ctx.fillStyle = '#cdeeda';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#c1e7d0';
+    for (let x = 0; x < W; x += 44) ctx.fillRect(x, 0, 22, H);
+  }
+
+  /* ----- 헤더 ----- */
+  ctx.textAlign = 'center';
+  if (isSci) {
+    ctx.fillStyle = '#ffd54a';
+    ctx.font = '900 32px "Malgun Gothic", sans-serif';
+    ctx.fillText('과학의 날 포토부스', W / 2, 52);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '700 15px "Malgun Gothic", sans-serif';
+    ctx.fillText('— SCIENCE DAY PHOTO BOOTH —', W / 2, 80);
+  } else {
+    ctx.fillStyle = '#2e7d5b';
+    ctx.font = '900 36px "Malgun Gothic", sans-serif';
+    ctx.fillText('SCIENCE DAY', W / 2, 56);
+    ctx.fillStyle = '#5aa583';
+    ctx.font = '800 17px "Malgun Gothic", sans-serif';
+    ctx.fillText('💚 0 4 2 1 💚 과학의 날 포토부스', W / 2, 86);
+  }
+
+  // 사진 4컷
+  const imgs = shots.map(src => { const im = new Image(); im.src = src; return im; });
+  let loaded = 0;
+  imgs.forEach(im => im.onload = () => { if (++loaded === imgs.length) draw(); });
+  if (imgs.every(im => im.complete)) draw();
+
+  function draw() {
+    const sciIm = matchedKey ? sciImages[matchedKey] : null;
+
+    imgs.forEach((im, i) => {
+      const y = headerH + i * (photoH + GAP);
+
+      ctx.save();
+      roundRect(ctx, PAD, y, photoW, photoH, 14);
+      ctx.clip();
+      // cover 방식으로 크롭
+      const sr = im.width / im.height, dr = photoW / photoH;
+      let sx = 0, sy = 0, sw = im.width, sh = im.height;
+      if (sr > dr) { sw = im.height * dr; sx = (im.width - sw) / 2; }
+      else { sh = im.width / dr; sy = (im.height - sh) / 2; }
+      ctx.drawImage(im, sx, sy, sw, sh, PAD, y, photoW, photoH);
+
+      // "과학자와 함께" 프레임: 컷마다 캐릭터가 좌우를 번갈아가며 함께 등장
+      if (isSci && matched) {
+        const size = Math.round(photoW * 0.38);
+        const onRight = i % 2 === 0;
+        const cx = onRight ? PAD + photoW - size * 0.52 : PAD + size * 0.52;
+        const cy = y + photoH - size * 0.44;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((onRight ? 5 : -5) * Math.PI / 180);
+        if (sciIm) {
+          ctx.shadowColor = 'rgba(0,0,0,0.35)';
+          ctx.shadowBlur = 10;
+          ctx.drawImage(sciIm, -size / 2, -size / 2, size, size);
+        } else {
+          ctx.font = Math.round(size * 0.55) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(matched.avatar, 0, size * 0.18);
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+
+      // 사진 테두리
+      ctx.strokeStyle = isSci ? 'rgba(255,255,255,0.65)' : '#ffffff';
+      ctx.lineWidth = isSci ? 3 : 5;
+      roundRect(ctx, PAD, y, photoW, photoH, 14);
+      ctx.stroke();
+    });
+
+    // "과학의 날" 프레임: 가장자리에 과학 아이콘 스티커 장식
+    if (!isSci) {
+      const deco = ['🧪', '🚀', '🔬', '🧬', '⚗️', '🎈', '⭐', '💚', '🪐', '✨'];
+      const zoneH = photoH * 4 + GAP * 3 + 40;
+      deco.forEach((e, idx) => {
+        const left = idx % 2 === 0;
+        const x = left ? PAD - 5 : W - PAD + 5;
+        const yy = headerH + 5 + idx * (zoneH / deco.length);
+        ctx.save();
+        ctx.translate(x, yy);
+        ctx.rotate((left ? -15 : 15) * Math.PI / 180);
+        ctx.font = '30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(e, 0, 10);
+        ctx.restore();
+      });
+    }
+
+    /* ----- 푸터 ----- */
+    const fy = headerH + photoH * 4 + GAP * 3;
+    ctx.textAlign = 'center';
+    const d = new Date();
+    const dateStr = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+    if (isSci) {
+      ctx.fillStyle = '#ffd54a';
+      ctx.font = '900 27px "Malgun Gothic", sans-serif';
+      ctx.fillText(matched ? matched.name : '과학의 날 기념', W / 2, fy + 48);
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.font = '14px "Malgun Gothic", sans-serif';
+      ctx.fillText(matched ? '나와 결이 맞는 과학자와 함께 · ' + dateStr : dateStr, W / 2, fy + 76);
+    } else {
+      ctx.fillStyle = '#2e7d5b';
+      ctx.font = '900 30px "Malgun Gothic", sans-serif';
+      ctx.fillText('HAPPY SCIENCE DAY 💚', W / 2, fy + 50);
+      ctx.fillStyle = '#6fae8f';
+      ctx.font = '14px "Malgun Gothic", sans-serif';
+      ctx.fillText(dateStr, W / 2, fy + 78);
+    }
+
+    document.getElementById('stickerImg').src = canvas.toDataURL('image/png');
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function saveSticker() {
+  const a = document.createElement('a');
+  a.href = document.getElementById('stickerCanvas').toDataURL('image/png');
+  a.download = 'photobooth_' + Date.now() + '.png';
+  a.click();
+}
+
+function retake() {
+  shots = [];
+  showScreen('scr-camera');
+}
+</script>
 </body>
 </html>
